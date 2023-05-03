@@ -25,11 +25,6 @@ public class Main {
         ) {
 
             System.out.println("Client started!");
-//            String msg = "Give me a record # 12";
-//            output.writeUTF(msg);
-//            String recivedMsg = input.readUTF();
-//            System.out.printf("Sent: %s%n", msg);
-//            System.out.printf("Received: %s%n", recivedMsg);
 
             if (requestArgs.type.equals("exit")) {
                 String exitRequest = "exit";
@@ -41,6 +36,7 @@ public class Main {
             }
 
             // Send request to server
+            Request request = new Request();
             String request = requestArgs.type + " " + requestArgs.index;
             if (requestArgs.type.equals("set")) {
                 request += " " + requestArgs.text;
@@ -57,3 +53,4 @@ public class Main {
         }
     }
 }
+
