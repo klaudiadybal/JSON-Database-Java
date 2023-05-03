@@ -1,5 +1,8 @@
 package server;
 
+import client.Request;
+import com.google.gson.Gson;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,43 +13,67 @@ import java.util.Scanner;
 import static java.lang.System.exit;
 
 public class Main {
-    private static Scanner scanner = new Scanner(System.in);
-    private String[] dataBase = new String[1000];
+    private static final Scanner scanner = new Scanner(System.in);
+    private final String[] dataBase = new String[1000];
     private static final int PORT = 34721;
     volatile static boolean stopFlag = false;
 
-    public static void previousTask(String[] args) {
-        Main base = new Main();
-        while (true) {
-            String input = scanner.nextLine();
-            if (input.equals("exit")) {
-                break;
+    public static void main(String[] args) {
+
+        Main dataBaseController = new Main();
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server started!");
+            while (!stopFlag) {
+                Socket clientSocket = serverSocket.accept();
+                new Thread(() -> {
+                    try {
+                        DataInputStream input = new DataInputStream(clientSocket.getInputStream());
+                        DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
+
+                        String readUTF = input.readUTF();
+                        Request request = new Gson().fromJson(readUTF, Request.class);
+
+                        Response response = new Response();
+                        if(request.getType().equals("exit")) {
+                            stopFlag = true;
+                            response.setResponse("OK");
+                            output.writeUTF(response.toString());
+                            System.out.printf("Sent: %s%n", response);
+                            System.out.printf("Received: %s%n", request);
+                            serverSocket.close();
+                            exit(0);
+                        }
+
+                        int index = request.getKey();
+                        if (request.getType().equals("get")) {
+                            response.setValue(dataBaseController.get(index));
+
+                        } else if (request.getType().equals("set")) {
+                            String text = request.getValue();
+                            response.setResponse(dataBaseController.set(index, text));
+
+                        } else if (request.getType().equals("delete")) {
+                            response.setResponse(dataBaseController.delete(index));
+                        } else {
+                            response.setResponse("Invalid request");
+                        }
+
+                        output.writeUTF(response.toString());
+                        System.out.printf("Received: %s%n", request);
+                        System.out.printf("Sent: %s%n", response);
+                        clientSocket.close();
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             }
 
-            String option = "";
-            int index = 0;
-            StringBuilder text = new StringBuilder();
-
-            try {
-                String[] inputArray = input.split(" ");
-                option = inputArray[0];
-                index = Integer.parseInt(inputArray[1]) - 1;
-                for (int i = 2; i < inputArray.length; i++) {
-                    text.append(inputArray[i]).append(" ");
-                }
-            } catch (IndexOutOfBoundsException e) {
-            }
-
-
-            switch (option) {
-                case "set" -> base.set(index, text.toString());
-                case "get" -> base.get(index);
-                case "delete" -> base.delete(index);
-                default -> System.out.println("ERROR");
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    }
 
+    }
 
     public boolean indexValidation(int index) {
         if (index < 0 || index > 999) {
@@ -87,85 +114,5 @@ public class Main {
             response = "OK";
         }
         return response;
-    }
-
-    public static void main(String[] args) throws IOException {
-
-
-        Main dataBaseController = new Main();
-
-//        try (ServerSocket server = new ServerSocket(PORT)) {
-//            System.out.println("Server started!");
-//            try (
-//                    Socket socket = server.accept();
-//                    DataInputStream input = new DataInputStream(socket.getInputStream());
-//                    DataOutputStream output = new DataOutputStream(socket.getOutputStream());
-//                ) {
-//                String receivedMsg = input.readUTF();
-//                System.out.printf("Received: %s%n", receivedMsg);
-//                String msg = "A record # 12 was sent!";
-//                output.writeUTF(msg);
-//                System.out.printf("Sent: %s%n", msg);
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-
-        ServerSocket serverSocket = new ServerSocket(PORT);
-        System.out.println("Server started!");
-        while (!stopFlag) { // Loop until stopFlag is set to true
-            Socket clientSocket = serverSocket.accept(); // Wait for incoming connection
-            new Thread(() -> {
-                try {
-                    DataInputStream input = new DataInputStream(clientSocket.getInputStream());
-                    DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
-
-                    // Read request from client
-                    String request = input.readUTF();
-                    // Handle request
-                    // -t get -i 1
-                    String response = "";
-
-                    if(request.equals("exit")) {
-                        stopFlag = true;
-                        response = "OK";
-                        output.writeUTF(response);
-                        System.out.printf("Sent: %s%n", response);
-                        System.out.printf("Received: %s%n", request);
-                        serverSocket.close();
-                        exit(0);
-                    }
-
-                    String[] requestParts = request.split(" ");
-
-                    int index = Integer.parseInt(requestParts[1]);
-                    if (requestParts[0].equals("get")) {
-                        // Handle get request
-                        response = dataBaseController.get(index);
-                    } else if (requestParts[0].equals("set")) {
-                        // Handle set request
-                        String text = "";
-                        for (int j = 2; j < requestParts.length; j++) {
-                            text += requestParts[j] + " ";
-                        }
-                        response = dataBaseController.set(index, text);
-                    } else if (requestParts[0].equals("delete")) {
-                        // Handle delete request
-                        response = dataBaseController.delete(index);
-                    } else {
-                        response = "Invalid request";
-                    }
-
-                    // Send response to client
-                    output.writeUTF(response);
-                    System.out.printf("Sent: %s%n", response);
-                    clientSocket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }).start();
-
-        }
     }
 }

@@ -8,16 +8,16 @@ public class Request {
     private static GsonBuilder gsonBuilder = new GsonBuilder();
 
     private String type;
-    private String key;
+    private int key;
     private String value;
 
-    public Request (String type, String key, String value) {
+    public Request (String type, int key, String value) {
         this.type = type;
         this.key = key;
         this.value = value;
     }
 
-    public Request (String type, String key) {
+    public Request (String type, int key) {
         this.type = type;
         this.key = key;
         // this.value = null;
@@ -39,11 +39,11 @@ public class Request {
         this.type = type;
     }
 
-    public String getKey() {
+    public int getKey() {
         return key;
     }
 
-    public void setKey(String key) {
+    public void setKey(int key) {
         this.key = key;
     }
 

@@ -36,12 +36,13 @@ public class Main {
             }
 
             // Send request to server
-            Request request = new Request();
-            String request = requestArgs.type + " " + requestArgs.index;
+            Request request = new Request(requestArgs.type, requestArgs.index);
+
             if (requestArgs.type.equals("set")) {
-                request += " " + requestArgs.text;
+                request.setValue(requestArgs.text);
             }
-            output.writeUTF(request);
+
+            output.writeUTF(request.toString());
             System.out.printf("Sent: %s%n", request);
 
             // Read response from server
