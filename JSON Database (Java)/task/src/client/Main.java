@@ -26,15 +26,6 @@ public class Main {
 
             System.out.println("Client started!");
 
-            if (requestArgs.type.equals("exit")) {
-                String exitRequest = "exit";
-                output.writeUTF(exitRequest);
-                System.out.printf("Sent: %s%n", exitRequest);
-                String response = input.readUTF();
-                System.out.printf("Received: %s%n", response);
-                return;
-            }
-
             // Send request to server
             Request request = new Request(requestArgs.type, requestArgs.index);
 

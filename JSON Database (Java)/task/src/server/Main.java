@@ -17,8 +17,15 @@ public class Main {
     private final String[] dataBase = new String[1000];
     private static final int PORT = 34721;
     volatile static boolean stopFlag = false;
+    private Response response = new Response();
 
     public static void main(String[] args) {
+        Main main = new Main();
+        main.serverStart();
+    }
+
+
+    public void serverStart() {
 
         Main dataBaseController = new Main();
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
@@ -31,38 +38,50 @@ public class Main {
                         DataOutputStream output = new DataOutputStream(clientSocket.getOutputStream());
 
                         String readUTF = input.readUTF();
-                        Request request = new Gson().fromJson(readUTF, Request.class);
+                        Request request = new Request();
 
-                        Response response = new Response();
+                        String [] requestParts = readUTF.split("\"");
+                        try {
+                            request.setType(requestParts[3]);
+                            request.setKey(Integer.parseInt(requestParts[7]));
+                            request.setValue(requestParts[11]);
+                        } catch (IndexOutOfBoundsException e) {
+                            request.setValue(null);
+                        }
+
+
                         if(request.getType().equals("exit")) {
                             stopFlag = true;
-                            response.setResponse("OK");
-                            output.writeUTF(response.toString());
-                            System.out.printf("Sent: %s%n", response);
+                            this.response.setResponse("OK");
+                            output.writeUTF(this.response.toString());
+                            System.out.printf("Sent: %s%n", this.response);
                             System.out.printf("Received: %s%n", request);
+                            // exit(0);
                             serverSocket.close();
-                            exit(0);
                         }
 
                         int index = request.getKey();
                         if (request.getType().equals("get")) {
-                            response.setValue(dataBaseController.get(index));
+                            this.response.setValue(dataBaseController.get(index, this.response));
 
                         } else if (request.getType().equals("set")) {
                             String text = request.getValue();
-                            response.setResponse(dataBaseController.set(index, text));
+                            this.response.setResponse(dataBaseController.set(index, text));
 
                         } else if (request.getType().equals("delete")) {
-                            response.setResponse(dataBaseController.delete(index));
+                            this.response.setResponse(dataBaseController.delete(index, this.response));
                         } else {
-                            response.setResponse("Invalid request");
+                            this.response.setResponse("Invalid request");
                         }
 
-                        output.writeUTF(response.toString());
+                        output.writeUTF(this.response.toString());
                         System.out.printf("Received: %s%n", request);
-                        System.out.printf("Sent: %s%n", response);
+                        System.out.printf("Sent: %s%n", this.response);
                         clientSocket.close();
 
+                        response.setResponse(null);
+                        response.setReason(null);
+                        response.setValue(null);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -77,6 +96,7 @@ public class Main {
 
     public boolean indexValidation(int index) {
         if (index < 0 || index > 999) {
+            this.response.setReason("No such key");
             return false;
         }
         return true;
@@ -93,26 +113,35 @@ public class Main {
         return response;
     }
 
-    public String get(int index) {
-        String response = "";
+    public String get(int index, Response response) {
+        String value = null;
         if (!indexValidation(index)) {
-            response = "ERROR";
+            response.setReason("No such key");
+            response.setResponse("ERROR");
+
         } else if (dataBase[index] == null) {
-            response = "ERROR";
+            response.setResponse("ERROR");
+            response.setReason("No such key");
+
         } else {
-            response = dataBase[index];
+            value = dataBase[index];
+            response.setResponse("OK");
         }
-        return response;
+        return value;
     }
 
-    public String delete(int index) {
-        String response = "";
+    public String delete(int index, Response response) {
+        String output = "";
         if (!indexValidation(index)) {
-            response = "ERROR";
+            output = "ERROR";
+            response.setReason("No such key");
+        } else if (dataBase[index] == null){
+            output = "ERROR";
+            response.setReason("No such key");
         } else {
             dataBase[index] = null;
-            response = "OK";
+            output = "OK";
         }
-        return response;
+        return output;
     }
 }
