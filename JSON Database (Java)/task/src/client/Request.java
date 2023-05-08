@@ -1,6 +1,12 @@
 package client;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 public class Request {
+
+    private static GsonBuilder gsonBuilder = new GsonBuilder();
+
     private String type;
     private int key;
     private String value;
@@ -14,20 +20,16 @@ public class Request {
     public Request (String type, int key) {
         this.type = type;
         this.key = key;
-        this.value = null;
+        // this.value = null;
     }
 
     public Request(String type) {
         this.type = type;
-        this.key = 0;
-        this.value = null;
+        // this.key = null;
+        // this.value = null;
     }
 
-    public Request() {
-        this.type = null;
-        this.key = 0;
-        this.value = null;
-    }
+    public Request() {}
 
     public String getType() {
         return type;
@@ -56,17 +58,10 @@ public class Request {
 
     @Override
     public String toString() {
-        String output = String.format("{\"type\":\"%s\"", this.type);
-        if (this.key != 0) {
-            output += String.format(",\"key\":\"%d\"", this.key);
-        }
+        Gson gson = gsonBuilder
+                .setPrettyPrinting()
+                .create();
 
-        if (this.value!=null) {
-            output += String.format(",\"value\":\"%s\"", this.value);
-        }
-
-        output += "}";
-
-        return output;
+        return gson.toJson(this);
     }
 }

@@ -6,10 +6,10 @@ public class Args {
     @Parameter (names = "-t", description = "Type of request")
     public String type;
 
-    @Parameter (names = "-k", description = "Index of cell")
+    @Parameter (names = "-i", description = "Index of cell")
     public int index;
 
-    @Parameter (names = "-v", description = "Text to store in server")
+    @Parameter (names = "-m", description = "Text to store in server")
     public String text;
 
 }
