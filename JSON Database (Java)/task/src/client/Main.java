@@ -33,7 +33,7 @@ public class Main {
         ) {
 
             System.out.println("Client started!");
-
+            //
             // Send request to server
             try {
                 Request request = new Request(requestArgs.type);

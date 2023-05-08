@@ -9,11 +9,15 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
+//
 
 public class Main {
     private static final Scanner scanner = new Scanner(System.in);
-    private final String[] dataBase = new String[1000];
+    private final Map<String, String> dataBase = new HashMap<>(1000);
     private static final int PORT = 34721;
     private volatile static boolean stopFlag = false;
     private Response response = new Response();
@@ -49,17 +53,17 @@ public class Main {
                                 return;
                             }
 
-                            int index = Integer.parseInt(request.getKey());;
+                            String key = request.getKey();
 
                             if (request.getType().equals("get")) {
-                                this.response.setValue(this.get(index, this.response));
+                                this.response.setValue(this.get(key, this.response));
 
                             } else if (request.getType().equals("set")) {
                                 String text = request.getValue();
-                                this.response.setResponse(this.set(index, text));
+                                this.response.setResponse(this.set(key, text));
 
                             } else if (request.getType().equals("delete")) {
-                                this.response.setResponse(this.delete(index, this.response));
+                                this.response.setResponse(this.delete(key, this.response));
                             } else {
                                 this.response.setResponse("Invalid request");
                             }
@@ -88,57 +92,50 @@ public class Main {
         }
     }
 
-    public boolean indexValidation(int index) {
-        if (index < 1 || index > 1000) {
-            this.response.setReason("No such key");
-            return false;
+    public boolean keyValidation(String key) {
+        Set<String> keySet = dataBase.keySet();
+        if (keySet.contains(key)) {
+            return true;
         }
-        return true;
+        response.setResponse("No such key");
+        return false;
     }
 
-    public String set(int index, String text) {
-        String response = "";
-        if (!indexValidation(index)) {
-            response = "ERROR";
-        } else {
-            dataBase[index - 1] = text;
-            response = "OK";
-        }
+    public String set(String key, String text) {
+        dataBase.put(key,text);
+        String response = "OK";
         return response;
     }
 
-    public String get(int index, Response response) {
+    public String get(String key, Response response) {
         String value = null;
-        if (!indexValidation(index)) {
+        if (!keyValidation(key)) {
             response.setReason("No such key");
             response.setResponse("ERROR");
-
-        } else if (dataBase[index - 1] == null) {
+        } else if (dataBase.get(key) == null) {
             response.setResponse("ERROR");
             response.setReason("No such key");
-
         } else {
-            value = dataBase[index - 1];
+            value = dataBase.get(key);
             response.setResponse("OK");
         }
         return value;
     }
 
-    public String delete(int index, Response response) {
+    public String delete(String key, Response response) {
         String output = "";
-        if (!indexValidation(index)) {
+        if (!keyValidation(key)) {
             output = "ERROR";
             response.setReason("No such key");
-        } else if (dataBase[index - 1] == null){
+        } else if (dataBase.get(key) == null) {
             output = "ERROR";
             response.setReason("No such key");
         } else {
-            dataBase[index - 1] = null;
+            dataBase.put(key, null);
             output = "OK";
         }
         return output;
     }
-
 
     public void shutdown(ServerSocket serverSocket, Socket clientSocket) {
         stopFlag = true;
