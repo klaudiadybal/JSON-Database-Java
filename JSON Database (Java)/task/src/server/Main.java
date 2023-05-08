@@ -13,10 +13,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-//
 
 public class Main {
-    private static final Scanner scanner = new Scanner(System.in);
     private final Map<String, String> dataBase = new HashMap<>(1000);
     private static final int PORT = 34721;
     private volatile static boolean stopFlag = false;
@@ -56,14 +54,15 @@ public class Main {
                             String key = request.getKey();
 
                             if (request.getType().equals("get")) {
-                                this.response.setValue(this.get(key, this.response));
+                                response.setValue(this.get(key, this.response));
 
                             } else if (request.getType().equals("set")) {
                                 String text = request.getValue();
-                                this.response.setResponse(this.set(key, text));
+                                this.set(key, text);
 
                             } else if (request.getType().equals("delete")) {
-                                this.response.setResponse(this.delete(key, this.response));
+                                this.delete(key);
+
                             } else {
                                 this.response.setResponse("Invalid request");
                             }
@@ -95,46 +94,34 @@ public class Main {
     public boolean keyValidation(String key) {
         Set<String> keySet = dataBase.keySet();
         if (keySet.contains(key)) {
-            return true;
+            if(dataBase.get(key) != null) {
+                return true;
+            }
         }
-        response.setResponse("No such key");
+        response.setResponse("ERROR");
+        response.setReason("No such key");
         return false;
     }
 
-    public String set(String key, String text) {
+    public void set(String key, String text) {
         dataBase.put(key,text);
-        String response = "OK";
-        return response;
+        this.response.setResponse("OK");
     }
 
     public String get(String key, Response response) {
         String value = null;
-        if (!keyValidation(key)) {
-            response.setReason("No such key");
-            response.setResponse("ERROR");
-        } else if (dataBase.get(key) == null) {
-            response.setResponse("ERROR");
-            response.setReason("No such key");
-        } else {
+        if (keyValidation(key)) {
             value = dataBase.get(key);
             response.setResponse("OK");
         }
         return value;
     }
 
-    public String delete(String key, Response response) {
-        String output = "";
-        if (!keyValidation(key)) {
-            output = "ERROR";
-            response.setReason("No such key");
-        } else if (dataBase.get(key) == null) {
-            output = "ERROR";
-            response.setReason("No such key");
-        } else {
+    public void delete(String key) {
+        if (keyValidation(key)) {
             dataBase.put(key, null);
-            output = "OK";
+            response.setResponse("OK");
         }
-        return output;
     }
 
     public void shutdown(ServerSocket serverSocket, Socket clientSocket) {
