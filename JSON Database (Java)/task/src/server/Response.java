@@ -8,6 +8,16 @@ public class Response {
 
     private String response;
     private String value;
+    private String reason;
+
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
 
 
     public String getResponse() {
@@ -29,7 +39,7 @@ public class Response {
     @Override
     public String toString() {
         Gson gson = gsonBuilder
-                .setPrettyPrinting()
+//                .setPrettyPrinting()
                 .create();
         return gson.toJson(this);
     }

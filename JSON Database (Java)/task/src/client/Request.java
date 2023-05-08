@@ -8,16 +8,16 @@ public class Request {
     private static GsonBuilder gsonBuilder = new GsonBuilder();
 
     private String type;
-    private int key;
+    private String key;
     private String value;
 
-    public Request (String type, int key, String value) {
+    public Request (String type, String key, String value) {
         this.type = type;
         this.key = key;
         this.value = value;
     }
 
-    public Request (String type, int key) {
+    public Request (String type, String key) {
         this.type = type;
         this.key = key;
         // this.value = null;
@@ -39,11 +39,11 @@ public class Request {
         this.type = type;
     }
 
-    public int getKey() {
+    public String getKey() {
         return key;
     }
 
-    public void setKey(int key) {
+    public void setKey(String key) {
         this.key = key;
     }
 
@@ -59,7 +59,7 @@ public class Request {
     @Override
     public String toString() {
         Gson gson = gsonBuilder
-                .setPrettyPrinting()
+//                .setPrettyPrinting()
                 .create();
 
         return gson.toJson(this);

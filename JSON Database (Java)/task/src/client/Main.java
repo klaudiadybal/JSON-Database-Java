@@ -1,9 +1,11 @@
 package client;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.ParameterException;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -15,7 +17,13 @@ public class Main {
     public static void main(String[] args) {
 
         Args requestArgs = new Args();
-        JCommander.newBuilder().addObject(requestArgs).build().parse(args);
+        try {
+            JCommander.newBuilder().addObject(requestArgs).build().parse(args);
+        } catch (ParameterException e) {
+            System.out.printf("Received:{\"type\":\"%s\",\"key\":\"%s\"}", requestArgs.type, requestArgs.index);
+            return;
+        }
+
 
         try (
                 Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
@@ -26,32 +34,34 @@ public class Main {
 
             System.out.println("Client started!");
 
-            if (requestArgs.type.equals("exit")) {
-                String exitRequest = "exit";
-                output.writeUTF(exitRequest);
-                System.out.printf("Sent: %s%n", exitRequest);
-                String response = input.readUTF();
-                System.out.printf("Received: %s%n", response);
-                return;
-            }
-
             // Send request to server
-            Request request = new Request(requestArgs.type, requestArgs.index);
+            try {
+                Request request = new Request(requestArgs.type);
 
-            if (requestArgs.type.equals("set")) {
-                request.setValue(requestArgs.text);
-            }
+                if(requestArgs.index != null) {
+                    request.setKey(requestArgs.index);
+                }
 
-            output.writeUTF(request.toString());
-            System.out.printf("Sent: %s%n", request);
+                if (requestArgs.type.equals("set")) {
+                    request.setValue(requestArgs.text);
+                }
 
-            // Read response from server
-            String response = input.readUTF();
-            System.out.printf("Received: %s%n", response);
+                output.writeUTF(request.toString());
+                System.out.printf("Sent: %s%n", request);
+                // Read response from server
+                String response = "";
+                try {
+                    response = input.readUTF();
+                } catch (EOFException e) {
+                    return;
+                }
+                System.out.printf("Received: %s%n", response);
+
+            } catch (NumberFormatException e) {}
+
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 }
-
