@@ -11,7 +11,7 @@ public class Args {
     @Parameter (names = "-k", description = "Index of cell")
     public String index;
 
-    @Parameter (names = "-v", description = "Text to store in server")
+    @Parameter(names = "-v", description = "Text to store in server")
     public String text;
 
     public static class TypeValidator implements IParameterValidator {
